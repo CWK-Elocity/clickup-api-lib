@@ -307,7 +307,7 @@ class Clickup:
         Raises:
             ValueError: If parent task wasn't found in tasks.
         """
-        if isinstance(task_id, int):
+        if isinstance(task_id, str):
             valid = self.check_task_validity(task_id)
             if valid:
                 self.body["parent"] = task_id

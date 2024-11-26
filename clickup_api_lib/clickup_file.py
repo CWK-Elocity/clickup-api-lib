@@ -152,6 +152,20 @@ class Clickup:
             self.body["description"] = description
         else:
             raise ValueError("Description must be a string")
+        
+    def add_markdown_description(self, markdown_description):
+        """Adding description in markdown to a task body
+
+        Args:
+            description (str): A markdown description of the task
+
+        Raises:
+            ValueError: If description is not a string
+        """
+        if isinstance(markdown_description, str):
+            self.body["markdown_description"] = markdown_description
+        else:
+            raise ValueError("Markdown description must be a string")
 
     def add_assignees(self, assignees):
         """Adds assignees to a task body

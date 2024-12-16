@@ -388,6 +388,41 @@ class Clickup:
             return response.json()
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Failed to fetch custom fields: {e}")
+
+    def add_watcher(self, user_id):
+        if not hasattr(self, 'body') or not isinstance(self.body, dict):
+            self.body = {}
+
+        if "watcher" not in self.body:
+            self.body["watcher"] = {"add": [], "rem": []}
+
+        if user_id not in self.body["watcher"]["add"]:
+            self.body["watcher"]["add"].append(user_id)
+
+    def remove_watcher(self, user_id):
+        if not hasattr(self, 'body') or not isinstance(self.body, dict):
+            self.body = {}
+
+        if "watcher" not in self.body:
+            self.body["watcher"] = {"add": [], "rem": []}
+
+        if user_id not in self.body["watcher"]["rem"]:
+            self.body["watcher"]["rem"].append(user_id)
+
+
+    def add_name(self, name):
+        """Adds task name 
+
+        Args:
+            name (string): task name
+
+        Raises:
+            ValueError: if name was not string
+        """
+        if isinstance(name, str):
+            self.body["name"] = name
+        else:
+            raise ValueError("Description must be a string")
         
     def get_customFieldId(self, name):
         self.CustomField_id = next([field["id"] for field in self.get_customFields().get("fields", []) if field["name"] == name], None)

@@ -428,7 +428,30 @@ class Clickup:
         self.CustomField_id = next([field["id"] for field in self.get_customFields().get("fields", []) if field["name"] == name], None)
         return self.CustomField_id
 
+    def clear_task(self):
+        self.body = {
+            }
+        self.customFields = []
 
+    def update_task(self):
+        """Update task  
 
+        Raises:
+            ValueError: If task was already created
+        """
+        
+        if self.id is not None:
+            raise ValueError("No task ID provided.")
+        
+        url = f"{self.base_url}task/{self.id}"
+        try:
+            response = requests.put(url=url, headers=self.headers, json=self.body)
 
-    
+            if response.status_code == 200:
+                return response.json()
+
+            else:
+                raise ValueError(f"Task update failed: {response.status_code} {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Unexcpeted error occurred while updateing task: {e}")

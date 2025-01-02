@@ -396,7 +396,7 @@ class Clickup:
         if "watchers" not in self.body:
             self.body["watchers"] = {"add": [], "rem": []}
 
-        if user_id not in self.body["watcher"]["add"]:
+        if user_id not in self.body["watchers"]["add"]:
             self.body["watchers"]["add"].append(user_id)
 
     def remove_watcher(self, user_id):
@@ -406,7 +406,7 @@ class Clickup:
         if "watchers" not in self.body:
             self.body["watchers"] = {"add": [], "rem": []}
 
-        if user_id not in self.body["watcher"]["rem"]:
+        if user_id not in self.body["watchers"]["rem"]:
             self.body["watchers"]["rem"].append(user_id)
 
 

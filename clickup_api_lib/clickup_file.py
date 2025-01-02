@@ -393,21 +393,21 @@ class Clickup:
         if not hasattr(self, 'body') or not isinstance(self.body, dict):
             self.body = {}
 
-        if "watcher" not in self.body:
-            self.body["watcher"] = {"add": [], "rem": []}
+        if "watchers" not in self.body:
+            self.body["watchers"] = {"add": [], "rem": []}
 
         if user_id not in self.body["watcher"]["add"]:
-            self.body["watcher"]["add"].append(user_id)
+            self.body["watchers"]["add"].append(user_id)
 
     def remove_watcher(self, user_id):
         if not hasattr(self, 'body') or not isinstance(self.body, dict):
             self.body = {}
 
-        if "watcher" not in self.body:
-            self.body["watcher"] = {"add": [], "rem": []}
+        if "watchers" not in self.body:
+            self.body["watchers"] = {"add": [], "rem": []}
 
         if user_id not in self.body["watcher"]["rem"]:
-            self.body["watcher"]["rem"].append(user_id)
+            self.body["watchers"]["rem"].append(user_id)
 
 
     def add_name(self, name):

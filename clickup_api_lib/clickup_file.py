@@ -440,7 +440,7 @@ class Clickup:
             ValueError: If task was already created
         """
         
-        if self.id is not None:
+        if self.id is None:
             raise ValueError("No task ID provided.")
         
         url = f"{self.base_url}task/{self.id}"

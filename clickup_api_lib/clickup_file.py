@@ -125,6 +125,10 @@ class Clickup:
         if self.id is not None:
             raise ValueError("Task already created.")
         
+        if 'name' not in self.body or not self.body['name'].strip():
+            raise ValueError("Task creation failed: 'name' is missing or empty in the task body.")
+
+        
         url = f"{self.base_url}list/{self.list_id}/task"
         try:
             response = requests.post(url=url, headers=self.headers, json=self.body)

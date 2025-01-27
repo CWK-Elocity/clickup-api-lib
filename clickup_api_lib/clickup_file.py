@@ -1,6 +1,17 @@
 import requests
 from datetime import datetime
 
+def is_not_empty(value):
+    if value is None:
+        return False
+    if isinstance(value, float) and value != value:
+        return False
+    if isinstance(value, str) and not value.strip():
+        return False
+    if isinstance(value, (list, tuple, set, dict)) and not value:
+        return False
+    return True
+
 class Clickup:
     def __init__(self, api_token, name=None, list_id=None):
         """creates an instance of Clickup task
@@ -125,7 +136,7 @@ class Clickup:
         if self.id is not None:
             raise ValueError("Task already created.")
         
-        if 'name' not in self.body or not self.body['name'].strip():
+        if 'name' not in self.body or not is_not_empty(self.body['name']):
             raise ValueError("Task creation failed: 'name' is missing or empty in the task body.")
 
         

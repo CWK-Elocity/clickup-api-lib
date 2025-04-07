@@ -25,12 +25,8 @@ class Clickup:
         self.headers = {
             "Authorization": api_token
         }
-        if name is None:
-            self.body = {}
-        else:
-            self.body = {
-                "name": name
-            }
+        self.body = {}
+        self.add_name(name)
         self.id = None
         self.valid_CustomFields_ids = None
         self.list_id = list_id
@@ -434,10 +430,14 @@ class Clickup:
         Raises:
             ValueError: if name was not string
         """
+        
         if isinstance(name, str):
             self.body["name"] = name
-        else:
-            raise ValueError("Description must be a string")
+        else: 
+            try:
+                name = str(name)
+            except Exception:
+                raise ValueError("Name could not be converted to a string")
         
     def get_customFieldId(self, name):
         self.CustomField_id = next([field["id"] for field in self.get_customFields().get("fields", []) if field["name"] == name], None)

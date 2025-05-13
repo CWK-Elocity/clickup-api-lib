@@ -221,7 +221,7 @@ class Clickup:
                 
         self.body["tags"] = tags
     
-    def add_status(self, status, valid_statuses=None):
+    def add_status(self, status):
         """Adds status to a task body
 
         Args:
@@ -231,15 +231,26 @@ class Clickup:
         Raises:
             ValueError: If after str() status is still not string
         """
+        if not hasattr(self, 'validStatuses') or not self.validStatuses:
+            self.get_statuses()
+            if not hasattr(self, 'validStatuses') or not self.validStatuses:
+                raise ValueError("Could not obtain statuses. No list ID provided.")
+    
+
         try:
             status = str(status)
         except Exception:
             raise ValueError(f"Status {status} could not be converted to a string")
         
+        """ obsolete
         if valid_statuses is not None:
             valid_statuses = list(valid_statuses)
             if status not in valid_statuses:
                 raise ValueError(f"Invalid status: {status}. Valid statuses are: {valid_statuses}")
+        """
+
+        if status not in self.validStatuses.values():   
+            raise ValueError(f"Invalid status: {status}. Valid statuses are: {self.validStatuses.values()}")
         
         self.body["status"] = status
 

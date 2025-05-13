@@ -470,3 +470,54 @@ class Clickup:
                 
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Unexcpeted error occurred while updateing task: {e}")
+        
+    def get_statuses(self):
+        """Obtains a list of statuses
+
+        Args:
+            list_id (int): id of list that statuses will be obtained from
+
+        Returns:
+            object: an JSON object with task metadata
+        """
+        if self.list_id is None:
+            raise ValueError("No list ID provided.")
+        url = f"{self.base_url}list/{self.list_id}"
+        try:
+            response = requests.get(url, headers=self.headers)
+            if response.status_code == 200:
+                pass
+            else:
+                raise ValueError(f"Failed to fetch statuses: {response.status_code} {response.text}")
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Failed to fetch statuses: {e}")
+        statuses = {}
+        try:
+            for status in response.json()["statuses"]:
+                if not isinstance(status["status"], str):
+                    raise ValueError(f"Status {status['status']} is not a string")
+                orderindex = status["orderindex"]
+                status_str = status["status"]
+                statuses[orderindex] = status_str
+                self.validStatuses = statuses
+        except KeyError as e:
+            raise ValueError(f"Failed to parse statuses from response: {e}.")
+
+    def get_first_status(self):
+        """Obtains the first status from the list
+
+        Returns:
+            str: name of the first status
+        """
+        if hasattr(self, 'validStatuses') and self.validStatuses:
+            statuses = self.validStatuses
+        else:
+            self.get_statuses()
+            if not hasattr(self, 'validStatuses') or not self.validStatuses:
+                raise ValueError("Could not obtain statuses. No list ID provided.")
+            statuses = self.validStatuses
+
+        if statuses:
+            return statuses[0]["status"]
+        else:
+            raise ValueError("No statuses found in the list.")

@@ -527,9 +527,7 @@ class Clickup:
             if not hasattr(self, 'validStatuses') or not self.validStatuses:
                 raise ValueError("Could not obtain statuses. No list ID provided.")
             statuses = self.validStatuses
-        print(statuses)
-        print(statuses[0]["status"])
-        if statuses and statuses[0]["orderindex"] == 0:
-            return statuses[0]["status"]
+        if statuses:
+            return statuses[0]
         else:
             raise ValueError("No statuses found in the list.")

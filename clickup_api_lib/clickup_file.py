@@ -531,3 +531,75 @@ class Clickup:
             return statuses[0]
         else:
             raise ValueError("No statuses found in the list.")
+        
+    def get_space_id(self):
+        """Obtains the space id from the list id
+
+        Returns:
+            str: id of the space
+        """
+        if self.list_id is None:
+            if self.id is None:
+                raise ValueError("No list ID nor task id provided.")
+            else:
+                url = f"{self.base_url}task/{self.id}"
+                try:
+                    response = requests.get(url, headers=self.headers)
+                    if response.status_code == 200:
+                        self.list_id = response.json().get("list", {}).get("id")
+                    else:
+                        raise ValueError(f"Failed to fetch list ID from task: {response.status_code} {response.text}")
+                except requests.exceptions.RequestException as e:
+                    raise ValueError(f"Failed to fetch list ID from task: {e}")
+        
+        url = f"{self.base_url}list/{self.list_id}"
+        try:
+            response = requests.get(url, headers=self.headers)
+            if response.status_code == 200:
+                self.space_id = response.json().get("space", {}).get("id")
+                return response.json().get("space", {}).get("id")
+            else:
+                raise ValueError(f"Failed to fetch space ID: {response.status_code} {response.text}")
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Failed to fetch space ID: {e}")
+        
+    def get_space_tags(self):
+        """Obtains the tags from the space
+
+        Returns:
+            list: list of tags
+        """
+        if not hasattr(self, 'space_id') or not self.space_id:
+            self.get_space_id()
+        space_id = self.space_id
+        url = f"{self.base_url}space/{space_id}/tag"
+        try:
+            response = requests.get(url, headers=self.headers)
+            if response.status_code == 200:
+                self.tags = response.json().get("tags", [])
+                return response.json().get("tags", [])
+            else:
+                raise ValueError(f"Failed to fetch tags: {response.status_code} {response.text}")
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Failed to fetch tags: {e}")
+        
+    def add_tag(self, tag_name):
+        """Adds a tag to the task
+
+        Args:
+            tag_name (str): name of the tag to be added
+
+        Raises:
+            ValueError: If tag name is not a string
+        """
+        if not hasattr(self, 'tags') or not self.tags:
+            self.get_space_tags()
+        
+        if isinstance(tag_name, str):
+            if tag_name not in [tag["name"] for tag in self.tags]:
+                raise ValueError(f"Tag {tag_name} does not exist in the space.")
+            if "tags" not in self.body:
+                self.body["tags"] = []
+            self.body["tags"].append(tag_name)
+        else:
+            raise ValueError("Tag name must be a string")

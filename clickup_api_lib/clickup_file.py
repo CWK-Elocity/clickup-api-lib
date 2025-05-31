@@ -603,3 +603,29 @@ class Clickup:
             self.body["tags"].append(tag_name)
         else:
             raise ValueError("Tag name must be a string")
+        
+    def add_attachment(self, file_stream, filename="attachment"):
+        """Adds an attachment (file stream) to the task via ClickUp API
+
+        Args:
+            file_stream (file-like object): File opened in binary mode or io.BytesIO
+            filename (str): Name for the uploaded file
+
+        Raises:
+            ValueError: If file_stream is not file-like or task ID is not set
+        """
+        if not hasattr(file_stream, "read"):
+            raise ValueError("file_stream must be a file-like object (e.g., open('file', 'rb') or io.BytesIO)")
+        if not self.id:
+            raise ValueError("Task ID is not set. Create the task first.")
+
+        url = f"{self.base_url}task/{self.id}/attachment"
+        headers = {
+            "Authorization": self.headers["Authorization"]
+        }
+        files = {"attachment": (filename, file_stream)}
+        response = requests.post(url, headers=headers, files=files)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError(f"Failed to upload attachment: {response.status_code} {response.text}")

@@ -596,8 +596,6 @@ class Clickup:
             self.get_space_tags()
         
         if isinstance(tag_name, str):
-            if tag_name not in [tag["name"] for tag in self.tags]:
-                raise ValueError(f"Tag {tag_name} does not exist in the space.")
             if "tags" not in self.body:
                 self.body["tags"] = []
             self.body["tags"].append(tag_name)

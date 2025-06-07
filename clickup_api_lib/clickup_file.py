@@ -366,48 +366,77 @@ class Clickup:
             else:
                 raise ValueError(f"Invalid task ID: {task_id}")
 
-    def add_customFields(self, customFields):
-        """Adds custom fields to a task
+    def add_customFieldValue(self, customFieldid, value):
+        """
+        Sets a custom field value for the current task (self.id) after validating type and value.
 
         Args:
-            customFields (dict): a dictionary with customfields
+            customFieldid (str): ID of the custom field.
+            value: Value to set (string for text, option id for dropdown).
 
         Raises:
-            ValueError: If given customFields weren't a dict
-            ValueError: If customField wasn't found in the list
-            ValueError: If one cusotmFields value was not a string 
+            ValueError: If task_id is missing, field_id is invalid, or value does not pass validation.
         """
-        if not isinstance(customFields, dict):
-            raise ValueError(f"Expected a dict instance from customFields")
-        
-        if self.valid_CustomFields_ids is None:
-            self.valid_CustomFields_ids = [field["id"] for field in self.get_customFields()["fields"]]
+        if not self.id:
+            raise ValueError("Task ID (self.id) is not set. Create the task first or set self.id.")
 
-        for key, value in customFields.items():
-            if key not in self.valid_CustomFields_ids:
-                raise ValueError(f"Invalid custom field ID: {key}")
-            
-            if isinstance(value, str):
-                self.customFields.append({"id": key, "value": value})
-            else:
-                raise ValueError(f"Invalid custom field value for {key}: {value}")
+        if not hasattr(self, "available_customFields") or not self.available_customFields:
+            self.get_customFields()
 
-        self.body["custom_fields"] = self.customFields
+        field = next((f for f in self.available_customFields if f["id"] == customFieldid), None)
+        if not field:
+            raise ValueError(f"Custom field with id '{customFieldid}' not found.")
+
+        if field["type"] == "drop_down":
+            option_ids = [opt["id"] for opt in field.get("options", [])]
+            if value not in option_ids:
+                matched_option = next((opt for opt in field.get("options", []) if opt["name"] == value), None)
+                if matched_option:
+                    value = matched_option["id"]
+                else:
+                    raise ValueError(
+                        f"Value '{value}' is not a valid option id or name for dropdown field '{field['name']}'."
+                    )
+        elif field["type"] == "short_text":
+            if not isinstance(value, str):
+                raise ValueError(f"Value for text field '{field['name']}' must be a string.")
+
+        url = f"{self.base_url}task/{self.id}/field/{customFieldid}"
+        headers = self.headers
+        body = {"value": value}
+        response = requests.post(url, headers=headers, json=body)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError(f"Failed to set custom field: {response.status_code} {response.text}")
 
     def get_customFields(self):
-        """Gets a valid customFields from list
+        """Gets a list of custom fields (id, name, type) from the list
 
         Raises:
             ValueError: If failed in fetching custom fields
 
         Returns:
-            JSON: whole answer of the server
+            list[dict]: List of dicts with keys 'id', 'name', 'type'
         """
         url = f"{self.base_url}list/{self.list_id}/field"
         try:
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
-            return response.json()
+            fields = response.json().get("fields", [])
+            result = []
+            for field in fields:
+                field_info = {
+                    "id": field.get("id"),
+                    "name": field.get("name"),
+                    "type": field.get("type"),
+                    "options": []
+                }
+                if field.get("type") == "drop_down":
+                    field_info["options"] = field.get("type_config", {}).get("options", [])
+                result.append(field_info)
+            self.available_customFields = result
+            return result
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Failed to fetch custom fields: {e}")
 

@@ -400,6 +400,14 @@ class Clickup:
         elif field["type"] == "short_text":
             if not isinstance(value, str):
                 raise ValueError(f"Value for text field '{field['name']}' must be a string.")
+        elif field["type"] == "list_relationship":
+            if isinstance(value, str):
+                add_list = [value]
+            elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                add_list = value
+            else:
+                raise ValueError("Value for 'list_relationship' must be a string or a list of strings.")
+            value = {"add": add_list}
 
         url = f"{self.base_url}task/{self.id}/field/{customFieldid}"
         headers = self.headers
@@ -656,3 +664,45 @@ class Clickup:
             return response.json()
         else:
             raise ValueError(f"Failed to upload attachment: {response.status_code} {response.text}")
+        
+    def get_task(self, task_id=None):
+        """Fetches a task by its ID.
+
+        Args:
+            task_id (str, optional): ID of the task. If None, uses self.id.
+
+        Returns:
+            dict: Task data as JSON.
+
+        Raises:
+            ValueError: If no task ID is provided or task not found.
+        """
+        if task_id is None:
+            task_id = self.id
+        if not task_id:
+            raise ValueError("No task ID provided.")
+
+        url = f"{self.base_url}task/{task_id}"
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError(f"Task not found: {response.status_code} {response.text}")
+
+    def does_task_exist(self, task_id=None):
+        """Checks if a task exists by its ID.
+
+        Args:
+            task_id (str, optional): ID of the task. If None, uses self.id.
+
+        Returns:
+            bool: True if task exists, False otherwise.
+        """
+        if task_id is None:
+            task_id = self.id
+        if not task_id:
+            return False
+
+        url = f"{self.base_url}task/{task_id}"
+        response = requests.get(url, headers=self.headers)
+        return response.status_code == 200

@@ -406,6 +406,19 @@ class Clickup:
         elif field["type"] == "short_text":
             if not isinstance(value, str):
                 raise ValueError(f"Value for text field '{field['name']}' must be a string.")
+        elif field["type"] == "list_relationship":
+            related_list_id = field.get("related_list_id")
+            if isinstance(value, str):
+                task_ids = [value]
+            elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                task_ids = value
+            else:
+                raise ValueError("Value for 'list_relationship' must be a string or a list of strings.")
+
+            for task_id in task_ids:
+                    if not self.does_task_exist(task_id, related_list_id):
+                        raise ValueError(f"Task '{task_id}' does not exist or does not belong to list '{related_list_id}'.")           
+            value = {"add": task_ids}
 
         url = f"{self.base_url}task/{self.id}/field/{customFieldid}"
         headers = self.headers
@@ -440,6 +453,8 @@ class Clickup:
                 }
                 if field.get("type") == "drop_down":
                     field_info["options"] = field.get("type_config", {}).get("options", [])
+                if field.get("type") == "list_relationship":
+                    field_info["related_list_id"] = field.get("type_config", {}).get("subcategory_id")
                 result.append(field_info)
             self.available_customFields = result
             return result
@@ -662,3 +677,55 @@ class Clickup:
             return response.json()
         else:
             raise ValueError(f"Failed to upload attachment: {response.status_code} {response.text}")
+        
+    def get_task(self, task_id=None):
+        """Fetches a task by its ID.
+
+        Args:
+            task_id (str, optional): ID of the task. If None, uses self.id.
+
+        Returns:
+            dict: Task data as JSON.
+
+        Raises:
+            ValueError: If no task ID is provided or task not found.
+        """
+        if task_id is None:
+            task_id = self.id
+        if not task_id:
+            raise ValueError("No task ID provided.")
+
+        url = f"{self.base_url}task/{task_id}"
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError(f"Task not found: {response.status_code} {response.text}")
+
+    def does_task_exist(self, task_id=None, list_id=None):
+        """Checks if a task exists by its ID and (optionally) if it belongs to a given list.
+
+        Args:
+            task_id (str, optional): ID of the task. If None, uses self.id.
+            list_id (str, optional): ID of the list to check task membership.
+
+        Returns:
+            bool: True if task exists (and is in the list if list_id is provided), False otherwise.
+        """
+        if task_id is None:
+            task_id = self.id
+        if not task_id:
+            return False
+
+        url = f"{self.base_url}task/{task_id}"
+        response = requests.get(url, headers=self.headers)
+        if response.status_code != 200:
+            return False
+
+        if list_id is not None:
+            try:
+                task_data = response.json()
+                return str(task_data.get("list", {}).get("id")) == str(list_id)
+            except Exception:
+                return False
+        return True

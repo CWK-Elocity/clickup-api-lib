@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime
+import warnings
 
 def is_not_empty(value):
     if value is None:
@@ -240,7 +241,7 @@ class Clickup:
         try:
             status = str(status)
         except Exception:
-            raise ValueError(f"Status {status} could not be converted to a string")
+            warnings.warn(f"Status {status} could not be converted to a string")
         
         """ obsolete
         if valid_statuses is not None:
@@ -249,9 +250,14 @@ class Clickup:
                 raise ValueError(f"Invalid status: {status}. Valid statuses are: {valid_statuses}")
         """
 
-        if status not in self.validStatuses.values():   
-            raise ValueError(f"Invalid status: {status}. Valid statuses are: {self.validStatuses.values()}")
-        
+        if status not in self.validStatuses.values():
+            first_status = self.get_first_status()
+            warnings.warn(
+                f"Invalid status: '{status}'. Using first available status: '{first_status}'. "
+                f"Valid statuses are: {list(self.validStatuses.values())}"
+            )
+            status = first_status
+
         self.body["status"] = status
 
     def add_priority(self, priority, valid_priorities=None):
